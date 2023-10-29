@@ -1,0 +1,69 @@
+// raja-ongkir.service.ts
+
+import { Injectable } from '@nestjs/common';
+import axios from 'axios';
+
+@Injectable()
+export class RajaOngkirService {
+  private readonly apiKey: string = 'YOUR_API_KEY';
+
+  async getShippingCost(origin: string, destination: string, weight: number): Promise<any> {
+    try {
+      const response = await axios.post(
+        'https://api.rajaongkir.com/starter/cost',
+        {
+          origin,
+          destination,
+          weight,
+          courier: 'jne', // Ganti dengan kurir yang sesuai
+        },
+        {
+          headers: {
+            key: this.apiKey,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+}
+
+// raja-ongkir.controller.ts
+
+import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { RajaOngkirService } from './raja-ongkir.service';
+
+@Controller('raja-ongkir')
+export class RajaOngkirController {
+  constructor(private readonly rajaOngkirService: RajaOngkirService) {}
+
+  @Get('shipping-cost/:origin/:destination/:weight')
+  async getShippingCost(
+    @Param('origin') origin: string,
+    @Param('destination') destination: string,
+    @Param('weight', ParseIntPipe) weight: number
+  ) {
+    const response = await this.rajaOngkirService.getShippingCost(
+      origin,
+      destination,
+      weight
+    );
+
+    return response;
+  }
+}
+
+// app.module.ts
+
+import { Module } from '@nestjs/common';
+import { RajaOngkirController } from './raja-ongkir.controller';
+import { RajaOngkirService } from './raja-ongkir.service';
+
+@Module({
+  controllers: [RajaOngkirController],
+  providers: [RajaOngkirService],
+})
+export class AppModule {}
