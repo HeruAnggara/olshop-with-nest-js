@@ -23,6 +23,7 @@ model akun  {
 model admin {
   id               String   @id   
   akun_id          String   
+  nama             String   
   avatar           String? 
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt()
@@ -33,7 +34,6 @@ model users {
   id               String   @id   
   akun_id          String
   nama             String
-  password         String 
   avatar           String? 
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt()
