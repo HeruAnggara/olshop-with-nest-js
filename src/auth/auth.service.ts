@@ -2,11 +2,14 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
-import { hash } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
+import { jwt_config } from 'src/config/jwt_config';
 
 @Injectable()
 export class AuthService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
     /**
      * Reigster akun
@@ -60,6 +63,11 @@ export class AuthService {
         }
     }
     
+    /**
+     * Register User
+     * @param data 
+     * @returns 
+     */
     async registerUser(data: RegisterDto) {
         try {
             const checkUser = await this.prisma.akun.findFirst({
@@ -104,5 +112,72 @@ export class AuthService {
                 message: 'Registrasi Gagal'
             }
         }
+    }
+
+    async login(data: LoginDto) {
+        try {
+            const akuns = await this.prisma.akun.findUnique({
+                where: {
+                    email: data.email,
+                }
+            });
+    
+            if (!akuns) {
+                throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
+            }
+    
+            
+            let userData;
+            const admin = await this.prisma.admin.findFirst({
+                where: {
+                    akun_id: akuns.id
+                }
+            });
+            const user = await this.prisma.users.findFirst({
+                where: {
+                    akun_id: akuns.id
+                }
+            });
+
+            if (admin) {
+                userData = admin;
+            } else if (user) {
+                userData = user;
+            }
+
+            if (!userData) {
+                throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
+            }
+
+            const userPassword = await compare(data.password, akuns.password);
+            if (userPassword) {
+                const accessToken = this.generateJWT({
+                    sub: akuns.id,
+                    name: userData.nama,
+                    email: akuns.email,
+                });
+
+                return {
+                    statusCode: HttpStatus.OK,
+                    token: accessToken,
+                    message: `Login ${admin ? 'admin' : 'user'} berhasil`,
+                };
+            } else {
+                return {
+                    statusCode: 200,
+                    message: 'Email atau password tidak cocok',
+                };
+            }
+        } catch (error) {
+            console.log(error);
+            throw new HttpException('Email atau password tidak cocok', HttpStatus.BAD_REQUEST);            
+        }
+    }
+
+    generateJWT(payload: any) {
+        return this.jwtService.sign(payload, {
+          secret: jwt_config.secret,
+          expiresIn: jwt_config.expired,
+        });
     }
 }
