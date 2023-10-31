@@ -44,7 +44,45 @@ export class AuthService {
                     nama: data.nama
                 }
             })
+
+            if((createAkun) && (createAdmin))
+                return {
+                    statusCode: 200,
+                    message: 'Register Berhasil',
+                };
+
+        } catch (error) {
+            console.log(error.message);
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Registrasi Gagal'
+            }
+        }
+    }
+    
+    async registerUser(data: RegisterDto) {
+        try {
+            const checkUser = await this.prisma.akun.findFirst({
+                where: {
+                  email: data.email,
+                },
+            });
+
+            if (checkUser) {
+                throw new HttpException('User already registered', HttpStatus.FOUND);
+            }
+
+            data.id = uuidv4();
+            data.password = await hash(data.password, 12);
+            const createAkun = await this.prisma.akun.create({
+                data: {
+                    id: data.id, 
+                    email: data.email,
+                    password: data.password
+                }
+            });
             
+            data.akun_id = createAkun.id
             const createUser = await this.prisma.users.create({
                 data: {
                     id: uuidv4(),
@@ -53,7 +91,7 @@ export class AuthService {
                 }
             })
 
-            if(createAkun && (createAdmin || createUser))
+            if((createAkun) && (createUser))
                 return {
                     statusCode: 200,
                     message: 'Register Berhasil',

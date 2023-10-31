@@ -3,9 +3,7 @@ import { IsString, IsNotEmpty, IsEmail, MinLength, MaxLength, Matches } from "cl
 export class RegisterDto {
   
   id: string;
-  
-  @IsNotEmpty()
-  @IsString()
+
   akun_id: string;
 
   @IsNotEmpty()
