@@ -7,8 +7,7 @@ export class CreateBarangDto {
     nama_produk: string
 
     @IsNotEmpty()
-    harga: number
+    harga: string
 
-    @IsNotEmpty()
     gambar: string
 }

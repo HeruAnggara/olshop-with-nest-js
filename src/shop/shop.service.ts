@@ -1,23 +1,24 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateBarangDto } from './dto/create_barang.dto';
 
 @Injectable()
 export class ShopService {
     constructor(private prisma: PrismaService) {}
 
-    async listBarang(id: string, keyword: any, page: number = 1, limit: number = 10) {
+    /**
+     * List barang
+     * @param id 
+     * @param keyword 
+     * @param page 
+     * @param limit 
+     * @returns 
+     */
+    async listBarang(keyword: any, page: number = 1, limit: number = 10) {
         try {
-            const akun = await this.prisma.akun.findFirst({
-                where: {
-                  id: id,
-                }
-            });
-
-            if(!akun) {
-                throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
-            }
-
             const skip = (page - 1) * limit;
 
             const where: Prisma.barangWhereInput = keyword
@@ -55,6 +56,43 @@ export class ShopService {
             return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: 'Gagal mengambil data barang'
+            }
+        }
+    }
+
+    /**
+     * tambah barang
+     * @param id 
+     * @param data 
+     * @returns 
+     */
+    async tambahBarang(id: string, data: CreateBarangDto){
+        try {
+            const admin = await this.prisma.admin.findFirst({
+                where: {akun_id: id}
+            })
+
+            if(!admin) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
+
+            const price = parseInt(data.harga)
+            const barang = await this.prisma.barang.create({
+                data: {
+                    id: uuidv4(),
+                    nama_produk: data.nama_produk,
+                    harga: price,
+                    gambar: data.gambar
+                }
+            })
+
+            return {
+                statusCode: HttpStatus.OK,
+                message: 'Data barang berhasil ditambahkan'
+            }
+        } catch (error) {
+            console.log(error.message);
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Gagal Menambahkan barang'
             }
         }
     }
