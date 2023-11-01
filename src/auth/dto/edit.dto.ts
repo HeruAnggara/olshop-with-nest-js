@@ -17,7 +17,6 @@ import {
     @IsEmail()
     email: string;
 
-    @IsNotEmpty()
     @IsString()
     @MinLength(8)
     @MaxLength(20)
@@ -26,7 +25,6 @@ import {
     })
     oldPassword: string;
 
-    @IsNotEmpty()
     @IsString()
     @MinLength(8)
     @MaxLength(20)

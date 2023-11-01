@@ -376,6 +376,11 @@ export class AuthService {
         }
     } 
 
+    /**
+     * Delete avatar
+     * @param id 
+     * @returns 
+     */
     async deleteAvatar(id: string) {
         try {
             const akun = await this.prisma.akun.findFirst({
@@ -445,43 +450,103 @@ export class AuthService {
         }
     }
 
-    // async editDataAdmin(akunId: string, data: EditDto) {
-    //     const akun = await this.prisma.akun.findUnique({
-    //       where: { id: akunId },
-    //     });
-    
-    //     if(!akun) {
-    //       throw new HttpException('Bad Request', HttpStatus.NOT_FOUND);
-    //     }
-    
-    //     const checkPassword = await compare(
-    //         data.oldPassword,
-    //         akun.password,
-    //     );
+    async editDataAkun(id: string, data: EditDto) {
+        try {
+            const akun = await this.prisma.akun.findFirst({
+                where: {
+                  id: id,
+                },
+                include: {
+                    admin: true,
+                    users: true
+                }
+            });
 
-    //     if(!checkPassword) {
-    //         throw new HttpException('Password tidak cocok', HttpStatus.UNAUTHORIZED);
-    //     }
+            if(!akun) {
+                throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
+            }
 
-    //     const updatedAkun = await this.prisma.akun.update({
-    //         where: { id: akunId },
-    //           data: {
-    //               email: data.email,
-    //               password: data.newPassword,
-    //               admin: {
-    //                 set: {
-    //                     nama: data.nama
-    //                 }
-    //               }
-    //           }
-    //     })
-    
-    //     return {
-    //       statusCode: 200,
-    //       message: 'Data berhasil diperbarui',
-    //       admin: updatedAkun,
-    //     };
-    // }
+            const admin = await this.prisma.admin.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+
+            const user = await this.prisma.users.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+            
+            data.newPassword = await hash(data.newPassword, 12);
+            if(admin) {
+                const checkPassword = await compare(
+                    data.oldPassword,
+                    akun.password,
+                );
+
+                if (checkPassword) {
+                    await this.prisma.akun.update({
+                        where: {
+                            id: id
+                        }, 
+                        data: {
+                            email: data.email,
+                            password: data.newPassword
+                        }
+                    })
+                    await this.prisma.admin.update({
+                        data: {
+                            nama: data.nama
+                        }, 
+                        where: {
+                            id: admin.id
+                        }
+                    })
+                    return {
+                        statusCode: HttpStatus.CREATED,
+                        message: 'Update data admin berhasil',
+                    };
+                }
+                
+            } else if(user) {
+                const checkPassword = await compare(
+                    data.oldPassword,
+                    akun.password,
+                );
+
+                if (checkPassword) {
+                    await this.prisma.akun.update({
+                        where: {
+                            id: id
+                        }, 
+                        data: {
+                            email: data.email,
+                            password: data.newPassword
+                        }
+                    })
+                    await this.prisma.users.update({
+                        data: {
+                            nama: data.nama
+                        }, 
+                        where: {
+                            id: user.id
+                        }
+                    })
+                    return {
+                        statusCode: HttpStatus.CREATED,
+                        message: 'Update data user berhasil',
+                    };
+                }
+            }  
+        } catch (error) {
+            console.log(error.message);
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Gagal edit data'
+            }
+        }
+    }
 
     generateJWT(payload: any) {
         return this.jwtService.sign(payload, {

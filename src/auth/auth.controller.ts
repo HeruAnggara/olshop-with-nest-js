@@ -6,6 +6,7 @@ import { AuthGuard } from './auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { EditDto } from './dto/edit.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -119,5 +120,12 @@ export class AuthController {
     async deleteFile(@Req() req) {
         const {id} = req.akun 
         return await this.authService.deleteAvatar(id);
+    }
+
+    @Patch('update/akun')
+    @UseGuards(AuthGuard)
+    async updateDataAkun(@Body() data: EditDto, @Req() req) {
+        const {id} = req.akun
+        return await this.authService.editDataAkun(id, data)
     }
 }
