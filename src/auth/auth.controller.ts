@@ -1,4 +1,4 @@
-import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, ParseFilePipe, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, FileTypeValidator, Get, MaxFileSizeValidator, ParseFilePipe, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -114,4 +114,10 @@ export class AuthController {
         return await this.authService.updateAvatar(id, file.filename);
     }
 
+    @Delete('/avatar')
+    @UseGuards(AuthGuard)
+    async deleteFile(@Req() req) {
+        const {id} = req.akun 
+        return await this.authService.deleteAvatar(id);
+    }
 }

@@ -229,6 +229,12 @@ export class AuthService {
         }
     }
 
+    /**
+     * Upload avatar
+     * @param id 
+     * @param avatar 
+     * @returns 
+     */
     async uploadAvatar(id: string, avatar: any) {
         try {
             const akun = await this.prisma.akun.findFirst({
@@ -295,6 +301,12 @@ export class AuthService {
         }
     }
 
+    /**
+     * Update avatar
+     * @param id 
+     * @param gambar 
+     * @returns 
+     */
     async updateAvatar(id: string, gambar){
         try {
             const akun = await this.prisma.akun.findFirst({
@@ -363,6 +375,75 @@ export class AuthService {
             }    
         }
     } 
+
+    async deleteAvatar(id: string) {
+        try {
+            const akun = await this.prisma.akun.findFirst({
+                where: {
+                  id: id,
+                },
+                include: {
+                    admin: true,
+                    users: true
+                }
+            });
+
+            if(!akun) {
+                throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
+            }
+
+            const admin = await this.prisma.admin.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+
+            const user = await this.prisma.users.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+            
+            if(admin) {
+                const filePath = `public/uploads/image/${admin.avatar}`;
+                await fs.promises.unlink(filePath); 
+                await this.prisma.admin.update({
+                    data: {
+                        avatar: '-'
+                    }, 
+                    where: {
+                        id: admin.id
+                    }
+                })
+
+                return {
+                    statusCode: HttpStatus.CREATED,
+                    message: 'Update avatar berhasil',
+                };
+            } else if(user) {
+                const filePath = `public/uploads/image/${user.avatar}`;
+                await fs.promises.unlink(filePath); 
+                await this.prisma.users.update({
+                    data: {
+                        avatar: '-'
+                    }, 
+                    where: {
+                        id: user.id
+                    }
+                })
+
+                return {
+                    statusCode: HttpStatus.CREATED,
+                    message: 'Update avatar berhasil',
+                };
+            }  
+        } catch (error) {
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: `Gagal menghapus file: ${error.message}`
+            }    
+        }
+    }
 
     // async editDataAdmin(akunId: string, data: EditDto) {
     //     const akun = await this.prisma.akun.findUnique({
