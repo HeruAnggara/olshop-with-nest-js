@@ -6,6 +6,7 @@ import { compare, hash } from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { jwt_config } from 'src/config/jwt_config';
+import { EditDto } from './dto/edit.dto';
 
 @Injectable()
 export class AuthService {
@@ -114,6 +115,11 @@ export class AuthService {
         }
     }
 
+    /**
+     * Login User
+     * @param data 
+     * @returns 
+     */
     async login(data: LoginDto) {
         try {
             const akuns = await this.prisma.akun.findUnique({
@@ -173,6 +179,158 @@ export class AuthService {
             throw new HttpException('Email atau password tidak cocok', HttpStatus.BAD_REQUEST);            
         }
     }
+
+    /**
+     * List Pengguna
+     * @param akunId 
+     * @returns 
+     */
+    async listPengguna(akunId: string) {
+        try {
+            const admin = await this.prisma.admin.findFirst({
+                where: { akun_id: akunId },
+            });
+    
+            if(!admin) {
+                throw new HttpException('Bad Request', HttpStatus.NOT_FOUND);
+            }
+    
+            const list = await this.prisma.akun.findMany({
+                select: {
+                    email: true,
+                    admin: {
+                        select: {
+                            nama: true,
+                            avatar: true
+                        }
+                    },
+                    users: {
+                        select: {
+                            nama: true,
+                            avatar: true
+                        }
+                    }
+                }
+            })
+    
+            return {
+                statusCode: HttpStatus.OK,
+                message: 'List Data Pengguna',
+                data: list
+            }
+        } catch (error) {
+            console.log(error.message);
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Gagal mendapat list admin'
+            }
+            
+        }
+    }
+
+    async uploadAvatar(id: string, avatar: any) {
+        try {
+            const akun = await this.prisma.akun.findFirst({
+                where: {
+                  id: id,
+                },
+                include: {
+                    admin: true,
+                    users: true
+                }
+            });
+
+            if(!akun) {
+                throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
+            }
+
+            const admin = await this.prisma.admin.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+
+            const user = await this.prisma.users.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+            
+            if(admin) {
+                const uploadAvatar = await this.prisma.admin.update({
+                    data: {
+                        avatar: avatar
+                    }, 
+                    where: {
+                        id: admin.id
+                    }
+                })
+
+                return {
+                    statusCode: HttpStatus.CREATED,
+                    message: 'Upload avatar berhasil',
+                };
+            } else if(user) {
+                const uploadAvatar = await this.prisma.users.update({
+                    data: {
+                        avatar: avatar
+                    }, 
+                    where: {
+                        id: user.id
+                    }
+                })
+
+                return {
+                    statusCode: HttpStatus.CREATED,
+                    message: 'Upload avatar berhasil',
+                };
+            }  
+        } catch (error) {
+            console.log(error.message);
+            return{
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Gagal Upload Foto'
+            }
+        }
+    }
+
+    // async editDataAdmin(akunId: string, data: EditDto) {
+    //     const akun = await this.prisma.akun.findUnique({
+    //       where: { id: akunId },
+    //     });
+    
+    //     if(!akun) {
+    //       throw new HttpException('Bad Request', HttpStatus.NOT_FOUND);
+    //     }
+    
+    //     const checkPassword = await compare(
+    //         data.oldPassword,
+    //         akun.password,
+    //     );
+
+    //     if(!checkPassword) {
+    //         throw new HttpException('Password tidak cocok', HttpStatus.UNAUTHORIZED);
+    //     }
+
+    //     const updatedAkun = await this.prisma.akun.update({
+    //         where: { id: akunId },
+    //           data: {
+    //               email: data.email,
+    //               password: data.newPassword,
+    //               admin: {
+    //                 set: {
+    //                     nama: data.nama
+    //                 }
+    //               }
+    //           }
+    //     })
+    
+    //     return {
+    //       statusCode: 200,
+    //       message: 'Data berhasil diperbarui',
+    //       admin: updatedAkun,
+    //     };
+    // }
 
     generateJWT(payload: any) {
         return this.jwtService.sign(payload, {
