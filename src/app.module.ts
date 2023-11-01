@@ -6,6 +6,7 @@ import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ShopModule } from './shop/shop.module';
+import { OrderModule } from './order/order.module';
 
 
 @Module({
@@ -16,6 +17,7 @@ import { ShopModule } from './shop/shop.module';
     AuthModule,
     PrismaModule,
     ShopModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
