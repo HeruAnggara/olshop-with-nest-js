@@ -38,20 +38,50 @@ model users {
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt()
   akun             akun     @relation(fields:[akun_id], references: [id])
+  keranjang        keranjang[]
+  checkout         checkout[]
+  konfirmasi       konfirmasi[]
 }
 
 model barang {
   id              String    @id
   nama_produk     String
   harga           Float     @db.Float
+  harga_diskon    Float?     @db.Float
   gambar          String
   kategori        kategori[]
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt()
+  keranjang       keranjang[]
 }
 
 model kategori {
   id      Int    @id @default(autoincrement())
   name    String
   barang  barang[]
+}
+
+model keranjang {
+  id          String    @id
+  users_id    String    
+  barang_id   String    
+  users       users     @relation(fields:[users_id], references: [id])
+  barang      barang    @relation(fields:[barang_id], references: [id])
+}
+
+model checkout {
+  id          String    @id
+  users_id    String    
+  total       Float     @db.Float    
+  users       users     @relation(fields:[users_id], references: [id])
+  konfirmasi  konfirmasi[]
+}
+
+model konfirmasi {
+  id              String    @id
+  users_id        String    
+  checkout_id     String      
+  bukti           String
+  users           users     @relation(fields:[users_id], references: [id])
+  checkout        checkout  @relation(fields:[checkout_id], references: [id])
 }
