@@ -8,6 +8,7 @@ import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { jwt_config } from 'src/config/jwt_config';
 import { EditDto } from './dto/edit.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -195,6 +196,20 @@ export class AuthService {
             if(!admin) {
                 throw new HttpException('Bad Request', HttpStatus.NOT_FOUND);
             }
+
+            // const skip = (page - 1) * limit;
+
+            // const where: Prisma.adminWhereInput = keyword
+            // ? {
+            //     OR: [
+            //         {
+            //             nama: {
+            //                 contains: keyword
+            //             },
+            //         },
+            //     ],
+            // }
+            // : {};
     
             const list = await this.prisma.akun.findMany({
                 select: {
@@ -211,8 +226,13 @@ export class AuthService {
                             avatar: true
                         }
                     }
-                }
+                },
+                // where,
+                // skip,
+                // take: limit,
             })
+
+            // const totalItems = await this.prisma.akun.count({ where });
     
             return {
                 statusCode: HttpStatus.OK,
@@ -450,6 +470,12 @@ export class AuthService {
         }
     }
 
+    /**
+     * Edit data akun
+     * @param id 
+     * @param data 
+     * @returns 
+     */
     async editDataAkun(id: string, data: EditDto) {
         try {
             const akun = await this.prisma.akun.findFirst({

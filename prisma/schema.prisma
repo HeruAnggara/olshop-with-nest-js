@@ -39,3 +39,19 @@ model users {
   updated_at       DateTime @updatedAt()
   akun             akun     @relation(fields:[akun_id], references: [id])
 }
+
+model barang {
+  id              String    @id
+  nama_produk     String
+  harga           Float     @db.Float
+  gambar          String
+  kategori        kategori[]
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt()
+}
+
+model kategori {
+  id      Int    @id @default(autoincrement())
+  name    String
+  barang  barang[]
+}
