@@ -73,4 +73,45 @@ export class AuthController {
         return await this.authService.uploadAvatar(id, file.filename)
     }  
 
+    @Patch('update/avatar')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(
+        FileInterceptor('avatar', {
+          storage: diskStorage({
+            destination: 'public/uploads/image',
+            filename: (req, file, cb) => {
+              const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+              cb(null, uniqueSuffix + extname(file.originalname));
+            },
+          }),
+          fileFilter: (req, file, cb) => {
+            const allowedExtensions = ['.jpeg', '.png', '.jpg'];
+            const maxSize = 2 * 1024 * 1024; // 2MB
+
+            const fileExtension = extname(file.originalname).toLowerCase();
+            if (!allowedExtensions.includes(fileExtension)) {
+              return cb(new Error('Only JPEG, PNG, or JPG files are allowed'), false);
+            }
+
+            if (file.size > maxSize) {
+              return cb(new Error('File size cannot exceed 2 MB'), false);
+            }
+            
+            cb(null, true);
+          }
+        }),
+    )
+    async updateGambar(
+    @UploadedFile(new ParseFilePipe({
+        validators: [
+        new MaxFileSizeValidator({ maxSize: 2000000 }),
+        new FileTypeValidator({ fileType: /image\/(jpeg|png|jpg)/ }),
+        ],
+    })) file: Express.Multer.File,
+    @Req() req
+    ) {
+    const {id} = req.akun 
+        return await this.authService.updateAvatar(id, file.filename);
+    }
+
 }

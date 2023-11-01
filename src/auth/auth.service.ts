@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { compare, hash } from 'bcrypt';
@@ -293,6 +294,75 @@ export class AuthService {
             }
         }
     }
+
+    async updateAvatar(id: string, gambar){
+        try {
+            const akun = await this.prisma.akun.findFirst({
+                where: {
+                  id: id,
+                },
+                include: {
+                    admin: true,
+                    users: true
+                }
+            });
+
+            if(!akun) {
+                throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
+            }
+
+            const admin = await this.prisma.admin.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+
+            const user = await this.prisma.users.findFirst({
+                where: {
+                    akun_id: id
+                }
+            });
+            
+            if(admin) {
+                const filePath = `public/uploads/image/${admin.avatar}`;
+                await fs.promises.unlink(filePath); 
+                await this.prisma.admin.update({
+                    data: {
+                        avatar: gambar
+                    }, 
+                    where: {
+                        id: admin.id
+                    }
+                })
+
+                return {
+                    statusCode: HttpStatus.CREATED,
+                    message: 'Update avatar berhasil',
+                };
+            } else if(user) {
+                const filePath = `public/uploads/image/${user.avatar}`;
+                await fs.promises.unlink(filePath); 
+                await this.prisma.users.update({
+                    data: {
+                        avatar: gambar
+                    }, 
+                    where: {
+                        id: user.id
+                    }
+                })
+
+                return {
+                    statusCode: HttpStatus.CREATED,
+                    message: 'Update avatar berhasil',
+                };
+            }  
+        } catch (error) {
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: `Gagal update file: ${error.message}`
+            }    
+        }
+    } 
 
     // async editDataAdmin(akunId: string, data: EditDto) {
     //     const akun = await this.prisma.akun.findUnique({
