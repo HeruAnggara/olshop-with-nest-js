@@ -65,6 +65,7 @@ model keranjang {
   id          String    @id
   users_id    String    
   barang_id   String    
+  jumlah      Int
   users       users     @relation(fields:[users_id], references: [id])
   barang      barang    @relation(fields:[barang_id], references: [id])
 }
