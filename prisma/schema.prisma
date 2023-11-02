@@ -53,6 +53,7 @@ model barang {
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt()
   keranjang       keranjang[]
+  checkout        checkout[]
 }
 
 model kategori {
@@ -73,8 +74,10 @@ model keranjang {
 model checkout {
   id          String    @id
   users_id    String    
+  barang_id   String
   total       Float     @db.Float    
   users       users     @relation(fields:[users_id], references: [id])
+  barang      barang    @relation(fields:[barang_id], references: [id])
   konfirmasi  konfirmasi[]
 }
 
