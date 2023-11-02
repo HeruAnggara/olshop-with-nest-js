@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AddCartDto } from './dto/addCart.dto';
+import { CheckoutDto } from './dto/checkout.dto';
 
 @Controller('order')
 export class OrderController {
@@ -19,5 +20,12 @@ export class OrderController {
     async detailCart(@Req() req) {
         const {id} = req.user
         return await this.order.detailCart(id);
+    }
+
+    @Post('checkout')
+    @UseGuards(AuthGuard)
+    async checkout(@Req() req, @Body() data: CheckoutDto) {
+        const {id} = req.user
+        return await this.order.checkout(id, data);
     }
 }
