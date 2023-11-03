@@ -85,7 +85,7 @@ model konfirmasi {
   id              String    @id
   users_id        String    
   checkout_id     String      
-  status          Boolean   @db.TinyInt()  @default(false)   
+  status          Int       @default(0)   
   bukti           String?
   users           users     @relation(fields:[users_id], references: [id])
   checkout        checkout  @relation(fields:[checkout_id], references: [id])
