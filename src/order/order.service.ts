@@ -196,4 +196,43 @@ export class OrderService {
             }
         }
     }
+
+    /**
+     * 
+     * @param id 
+     * @param checkoutId 
+     * @param bukti 
+     * @returns 
+     */
+    async konfirmasi(id: string, checkoutId: string, bukti: any) {
+        try {
+            const user = await this.prisma.users.findFirst({
+                where: { akun_id: id }
+            })
+
+            if(!user) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
+
+            await this.prisma.konfirmasi.create({
+                data: {
+                    id: uuidv4(),
+                    users_id: user.id,
+                    checkout_id: checkoutId,
+                    bukti: bukti,
+                    status: 1
+                }
+            })
+
+            return {
+                statusCode: HttpStatus.CREATED,
+                message: 'Berhasil membuat transaksi'
+            }
+        } catch (error) {
+            console.log(error.message);
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Gagal melakukan transaksi'
+            }
+            
+        }
+    }
 }
