@@ -144,4 +144,56 @@ export class OrderService {
             }
         }
     }
+
+    /**
+     * Checkout Detail
+     * @param id 
+     * @param checkoutId 
+     * @returns 
+     */
+    async checkoutDetail(id: string, checkoutId: string) {
+        try {
+            const user = await this.prisma.users.findFirst({
+                where: { akun_id: id }
+            })
+
+            if(!user) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
+
+            const data = await this.prisma.checkout.findMany({
+                where: {
+                    id: checkoutId,
+                    users_id: user.id
+                },
+                select: {
+                    id: true,
+                    total: true,
+                    barang: {
+                        select: {
+                            nama_produk: true,
+                            harga: true,
+                            gambar: true
+                        },
+                    },
+                    users: {
+                        select: {
+                            nama: true,
+                            id: true
+                        }
+                    }
+                }
+            })
+
+            return {
+                statusCode: HttpStatus.OK,
+                message: 'List barang checkout',
+                data: data
+            }
+        } catch (error) {
+            console.log(error.message);
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Gagal mendapatkan data checkkout'
+            }
+        }
+    }
 }
