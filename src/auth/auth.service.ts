@@ -98,7 +98,9 @@ export class AuthService {
                 data: {
                     id: uuidv4(),
                     akun_id: data.akun_id,
-                    nama: data.nama
+                    nama: data.nama,
+                    alamat: data.alamat,
+                    no_wa: data.no_wa
                 }
             })
 

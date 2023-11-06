@@ -14,6 +14,12 @@ export class RegisterDto {
   @IsEmail()
   email: string;
 
+  @IsString()
+  no_wa: string;
+
+  @IsString()
+  alamat:string
+
   @IsNotEmpty()
   @IsString()
   @MinLength(6)
