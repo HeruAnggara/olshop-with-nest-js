@@ -1,10 +1,22 @@
-import { IsString, IsNotEmpty, IsEmail, MinLength, MaxLength, Matches } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, MinLength, MaxLength, Matches, IsInt } from "class-validator";
 
 export class RegisterDto {
   
   id: string;
 
   akun_id: string;
+
+  @IsNotEmpty()
+  @IsInt()
+  kecamatan_id: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  kota_id: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  provinsi_id: number;
 
   @IsNotEmpty()
   @IsString()
