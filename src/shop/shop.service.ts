@@ -74,13 +74,16 @@ export class ShopService {
 
             if(!admin) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
 
-            const price = parseInt(data.harga)
+            const price = parseInt(data.harga);
+            const diskon = parseInt(data.harga_diskon);
             const barang = await this.prisma.barang.create({
                 data: {
                     id: uuidv4(),
                     nama_produk: data.nama_produk,
                     harga: price,
-                    gambar: data.gambar
+                    harga_diskon: diskon,
+                    gambar: data.gambar,
+                    berat: data.berat
                 }
             })
 
@@ -93,6 +96,50 @@ export class ShopService {
             return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: 'Gagal Menambahkan barang'
+            }
+        }
+    }
+
+    /**
+     * edit barang
+     * @param id 
+     * @param data 
+     * @param barangId 
+     * @returns 
+     */
+    async editBarang(id: string, data: CreateBarangDto, barangId: string) {
+        try {
+            const admin = await this.prisma.admin.findFirst({
+                where: {akun_id: id}
+            })
+
+            if(!admin) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
+
+            const price = parseInt(data.harga);
+            const diskon = parseInt(data.harga_diskon);
+            const barang = await this.prisma.barang.update({
+                where: {
+                    id: barangId
+                },
+                data: {
+                    id: uuidv4(),
+                    nama_produk: data.nama_produk,
+                    harga: price,
+                    harga_diskon: diskon,
+                    gambar: data.gambar,
+                    berat: data.berat
+                }
+            })
+
+            return {
+                statusCode: HttpStatus.OK,
+                message: 'Data barang berhasil diubah'
+            }
+        } catch (error) {
+            console.log(error.message);
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Gagal mengubah data barang'
             }
         }
     }

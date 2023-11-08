@@ -9,5 +9,10 @@ export class CreateBarangDto {
     @IsNotEmpty()
     harga: string
 
+    harga_diskon: string
+
     gambar: string
+
+    @IsNotEmpty()
+    berat: number
 }
