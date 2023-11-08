@@ -4,8 +4,8 @@ import {
     IsNotEmpty,
     IsString,
     IsEmail,
-    isString,
-    Matches
+    Matches,
+    IsInt,
   } from 'class-validator';
   
   export class EditDto {
@@ -14,9 +14,29 @@ import {
     @IsString()
     nama: string;
 
+    @IsNotEmpty()
+    no_wa: string
+
+    @IsNotEmpty()
+    alamat: string
+
+    @IsNotEmpty()
+    @IsInt()
+    kecamatan_id: number;
+
+    @IsNotEmpty()
+    @IsInt()
+    kota_id: number;
+
+    @IsNotEmpty()
+    @IsInt()
+    provinsi_id: number;
+
+    @IsNotEmpty()
     @IsEmail()
     email: string;
 
+    @IsNotEmpty()
     @IsString()
     @MinLength(8)
     @MaxLength(20)
@@ -25,6 +45,7 @@ import {
     })
     oldPassword: string;
 
+    @IsNotEmpty()
     @IsString()
     @MinLength(8)
     @MaxLength(20)

@@ -100,6 +100,9 @@ export class AuthService {
                     akun_id: data.akun_id,
                     nama: data.nama,
                     alamat: data.alamat,
+                    kecamatan_id: data.kecamatan_id,
+                    kota_id: data.kota_id,
+                    provinsi_id: data.provinsi_id,
                     no_wa: data.no_wa
                 }
             })
@@ -555,7 +558,12 @@ export class AuthService {
                     })
                     await this.prisma.users.update({
                         data: {
-                            nama: data.nama
+                            nama: data.nama,
+                            alamat: data.alamat,
+                            no_wa: data.no_wa,
+                            kecamatan_id: data.kecamatan_id,
+                            kota_id: data.kota_id,
+                            provinsi_id: data.provinsi_id
                         }, 
                         where: {
                             id: user.id
