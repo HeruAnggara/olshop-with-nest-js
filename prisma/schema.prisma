@@ -31,15 +31,21 @@ model admin {
 }
 
 model users {
-  id               String   @id   
+  id               String       @id   
   akun_id          String
   nama             String
   avatar           String? 
-  alamat           String 
+  alamat           String
+  kecamatan_id     Int
+  kota_id          Int
+  provinsi_id      Int
   no_wa            String 
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt()
-  akun             akun     @relation(fields:[akun_id], references: [id])
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt()
+  akun             akun         @relation(fields:[akun_id], references: [id])
+  kota             kota         @relation(fields:[kota_id], references: [city_id])
+  kecamatan        kecamatan    @relation(fields:[kecamatan_id], references: [kecamatan_id])
+  provinsi         provinsi     @relation(fields:[provinsi_id], references: [province_id])
   keranjang        keranjang[]
   checkout         checkout[]
   konfirmasi       konfirmasi[]
@@ -94,4 +100,29 @@ model konfirmasi {
   total_transaksi   Float     @db.Float 
   users             users     @relation(fields:[users_id], references: [id])
   checkout          checkout  @relation(fields:[checkout_id], references: [id])
+}
+
+model kota {
+  city_id          Int  @id 
+  province_id      Int
+  city_name        String?
+  postal_code      String?
+  provinsi         provinsi     @relation(fields:[province_id], references: [province_id])
+  kecamatan        kecamatan[]
+  users            users[]
+}
+
+model provinsi {
+  province_id       Int     @id
+  province_name     String  
+  kota              kota[] 
+  users             users[]
+}
+
+model kecamatan {
+  kecamatan_id      Int   @id
+  city_id           Int
+  kecamatan_name    String
+  kota              kota    @relation(fields: [city_id], references: [city_id])
+  users             users[]
 }
