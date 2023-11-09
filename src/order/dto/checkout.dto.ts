@@ -6,11 +6,4 @@ export class CheckoutDto {
     @IsString()
     barang_id: string
 
-    @IsNotEmpty()
-    @IsString()
-    origin: string
-
-    @IsNotEmpty()
-    @IsString()
-    destination: string
 }
