@@ -1,4 +1,4 @@
-import { Body, Controller, FileTypeValidator, Get, HttpException, HttpStatus, MaxFileSizeValidator, Param, ParseFilePipe, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, FileTypeValidator, Get, HttpException, HttpStatus, MaxFileSizeValidator, Param, ParseFilePipe, ParseIntPipe, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AddCartDto } from './dto/addCart.dto';
@@ -44,26 +44,39 @@ export class OrderController {
     @UseInterceptors(
     FileInterceptor('bukti', {
         storage: diskStorage({
-        destination: 'public/uploads/bukti',
-        filename: (req, file, cb) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            cb(null, uniqueSuffix + extname(file.originalname));
-        },
+            destination: 'public/uploads/bukti',
+            filename: (req, file, cb) => {
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                cb(null, uniqueSuffix + extname(file.originalname));
+            },
         }),
-    }),
+        fileFilter: (req, file, cb) => {
+            const allowedExtensions = ['.jpeg', '.png', '.jpg'];
+            const maxSize = 2 * 1024 * 1024;
+      
+            const fileExtension = extname(file.originalname).toLowerCase();
+            if (!allowedExtensions.includes(fileExtension)) {
+              return cb(new Error('Only JPEG, PNG, or JPG files are allowed'), false);
+            }
+      
+            if (file.size > maxSize) {
+              return cb(new Error('File size cannot exceed 2 MB'), false);
+            }
+            
+            cb(null, true);
+          }
+        }),
     )
     async transaksi(@Req() req, @Param('checkoutId') checkoutId: string, @UploadedFile() file: Express.Multer.File) {
     const { id } = req.user;
 
     let fileName = null;
     
-    // Cek apakah ada berkas yang diunggah
     if (file) {
         const allowedExtensions = ['.jpeg', '.png', '.jpg'];
-        const maxSize = 2 * 1024 * 1024; // 2MB
+        const maxSize = 2 * 1024 * 1024;
         const fileExtension = extname(file.originalname).toLowerCase();
 
-        // Validasi ekstensi dan ukuran berkas jika ada
         if (!allowedExtensions.includes(fileExtension)) {
         return new HttpException('Only JPEG, PNG, or JPG files are allowed', HttpStatus.BAD_REQUEST);
         }
@@ -78,4 +91,15 @@ export class OrderController {
     return await this.order.konfirmasi(id, checkoutId, fileName);
     }
 
+    @Get("cek/ongkir/:origin/:destination/:weight")
+    async cekOngkir(
+        @Param('origin') origin: string,
+        @Param('destination') destination: string,
+        @Param('weight', ParseIntPipe) weight: number
+    ) {
+        return await this.order.cekOngkir(origin,
+            destination,
+            weight
+            )
+    }
 }

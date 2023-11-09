@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddCartDto } from './dto/addCart.dto';
 import { CheckoutDto } from './dto/checkout.dto';
+import axios from 'axios';
+import { GetOngkirDto } from './dto/getOngkir.dto';
 
 @Injectable()
 export class OrderService {
@@ -118,16 +120,18 @@ export class OrderService {
                     id: data.barang_id
                 }
             })
-
-            let x;
-            for(x in keranjang) {                
+            
+            for(let x in keranjang) {  
+                const totalBerat = barang.berat * keranjang[x].jumlah;   
+                const ongkir = await this.cekOngkir(data.origin, data.destination, totalBerat);           
                 const total = (barang.harga_diskon) ? keranjang[x].jumlah * barang.harga_diskon : keranjang[x].jumlah * barang.harga;
                 await this.prisma.checkout.create({
                     data: {
                         id: uuidv4(),
                         users_id: user.id,
                         barang_id: data.barang_id,
-                        total: total
+                        total: total,
+                        ongkir: ongkir
                     }
                 })
 
@@ -218,7 +222,8 @@ export class OrderService {
                     users_id: user.id,
                     checkout_id: checkoutId,
                     bukti: bukti,
-                    status: 1
+                    status: 1,
+                    total_transaksi: 30000
                 }
             })
 
@@ -233,6 +238,46 @@ export class OrderService {
                 message: 'Gagal melakukan transaksi'
             }
             
+        }
+    }
+
+    /**
+     * cek ongkir
+     * @param origin 
+     * @param destination 
+     * @param weight 
+     * @returns 
+     */
+    async cekOngkir(origin: string, destination: string, weight: number) {
+        try {
+          const response = await axios.post(
+            'https://api.rajaongkir.com/starter/cost',
+            {
+              origin,
+              destination,
+              weight,
+              courier: 'jne',
+            },
+            {
+              headers: {
+                key: process.env.API_KEY,
+              },
+            }
+          );
+    
+          const rajaongkir = response.data.rajaongkir
+          const detail = rajaongkir.results
+          let x;
+          for(x in detail){
+            const costs = detail[x].costs;
+            const regService = costs.filter(item => item.service === "REG");
+            const costForRegService = regService.length > 0 ? regService[0].cost[0].value : [];
+
+            return costForRegService;
+          }
+          
+        } catch (error) {
+          throw error;
         }
     }
 }
