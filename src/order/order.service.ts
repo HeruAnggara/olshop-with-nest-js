@@ -24,13 +24,13 @@ export class OrderService {
 
             if(!user) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
 
-            await this.prisma.keranjang.create({
-                data: {
+            await this.prisma.keranjang.createMany({
+                data: [{
                     id: uuidv4(),
                     users_id: user.id,
                     barang_id: data.barang_id,
                     jumlah: data.jumlah
-                }
+                }]
             })
 
             return {
@@ -104,42 +104,51 @@ export class OrderService {
     async checkout(id: string, data: CheckoutDto) {
         try {
             const user = await this.prisma.users.findFirst({
-                where: { akun_id: id }
+                where: { akun_id: id },
+                include: {
+                    keranjang: true
+                }
             })
 
             if(!user) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
 
-            const keranjang = await this.prisma.keranjang.findMany({
-                where: {
-                    users_id: user.id
-                }
-            })
-
+            const keranjang = user.keranjang;
             const barang = await this.prisma.barang.findFirst({
                 where: {
                     id: data.barang_id
                 }
             })
-            
-            for(let x in keranjang) {  
-                const totalBerat = barang.berat * keranjang[x].jumlah;   
-                const ongkir = await this.cekOngkir(data.origin, data.destination, totalBerat);           
-                const total = (barang.harga_diskon) ? keranjang[x].jumlah * barang.harga_diskon : keranjang[x].jumlah * barang.harga;
-                await this.prisma.checkout.create({
-                    data: {
+
+            const destination = user.kota_id;
+            const ongkirPromises = keranjang.map(async (item) => {
+                const totalBerat = barang.berat * item.jumlah;
+                const total = (barang.harga_diskon) ? item.jumlah * barang.harga_diskon : item.jumlah * barang.harga;
+                const ongkir = await this.cekOngkir("153", destination.toString(), totalBerat);
+                return { ongkir, total };
+            });
+            try {
+                const ongkirResults = await Promise.all(ongkirPromises);
+
+                await this.prisma.checkout.createMany({
+                    data: [{
                         id: uuidv4(),
                         users_id: user.id,
                         barang_id: data.barang_id,
-                        total: total,
-                        ongkir: ongkir
-                    }
-                })
+                        total: ongkirResults[0].total, 
+                        ongkir: ongkirResults[0].ongkir,
+                        status: 1
+                    }]
+                });
 
                 return {
                     statusCode: HttpStatus.CREATED,
                     message: 'Barang telah dicheckout'
                 }
-            }  
+            } catch (error) {
+                console.error("Pemanggilan cekOngkir gagal:", error.message);
+                throw new HttpException('Pemanggilan cekOngkir gagal', HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            
         } catch (error) {
             console.log(error);
             return {
@@ -208,22 +217,35 @@ export class OrderService {
      * @param bukti 
      * @returns 
      */
-    async konfirmasi(id: string, checkoutId: string, bukti: any) {
+    async transaksi(id: string, checkoutId: string, bukti: any) {
         try {
             const user = await this.prisma.users.findFirst({
-                where: { akun_id: id }
+                where: { akun_id: id },
+                include: {
+                    checkout: {
+                        where: {
+                            status: 1
+                        }
+                    }
+                }                
             })
 
             if(!user) throw new HttpException('Pengguna tidak ditemukan', HttpStatus.NOT_FOUND);
 
+            const checkkout = user.checkout;
+            const totalPromises = checkkout.map(async (item) => {
+                const total = item.total + item.ongkir
+                return total;
+            });
+
+            const total = await Promise.all(totalPromises);
             await this.prisma.konfirmasi.create({
                 data: {
                     id: uuidv4(),
                     users_id: user.id,
                     checkout_id: checkoutId,
                     bukti: bukti,
-                    status: 1,
-                    total_transaksi: 30000
+                    total_transaksi: total[0]
                 }
             })
 
@@ -267,6 +289,7 @@ export class OrderService {
     
           const rajaongkir = response.data.rajaongkir
           const detail = rajaongkir.results
+
           let x;
           for(x in detail){
             const costs = detail[x].costs;
@@ -279,5 +302,82 @@ export class OrderService {
         } catch (error) {
           throw error;
         }
+    }
+
+    async listService(id: string, data: GetOngkirDto) {
+        try {
+            const keranjang = await this.prisma.keranjang.findFirst({
+                where:{
+                    id: id
+                }, 
+                select: {
+                    barang: {
+                        select: {
+                            berat: true
+                        }
+                    },
+                    jumlah: true
+                } 
+            })
+
+            if (!keranjang) {
+                throw new HttpException('Keranjang tidak ditemukan', HttpStatus.NOT_FOUND);
+              }
+          
+              const weight = keranjang.barang.berat; 
+          
+              const totalBerat = keranjang.jumlah * weight;
+          
+              const origin = data.origin;
+              const destination = data.destination;
+          
+              const response = await axios.post(
+                'https://api.rajaongkir.com/starter/cost',
+                {
+                  origin,
+                  destination,
+                  weight: totalBerat,
+                  courier: 'jne',
+                },
+                {
+                  headers: {
+                    key: process.env.API_KEY,
+                  },
+                }
+              );
+  
+            const rajaongkir = response.data.rajaongkir;
+            const detail = rajaongkir.results[0].costs;
+            const service = detail.map(async(item) => {
+                const servis = item.service;
+                const cost = item.cost;
+
+                return {servis, cost}
+            })
+
+            const detailService = await Promise.all(service);
+
+            for (let x = 0; x < detailService.length; x++) {
+                const element = detailService[x];
+            }
+
+            return detailService[0].cost[0].value;
+
+            // const serviceCost = detail.map(async(item) => {
+            //     return
+            // })
+            return service;
+            // let x;
+            // for(x in detail){
+            //   const costs = detail[x].costs;
+            //   const regService = costs.filter(item => item.service === "REG");
+            //   const costForRegService = regService.length > 0 ? regService[0].cost[0].value : [];
+  
+            //   return costForRegService;
+            // }
+            
+          } catch (error) {
+            throw error;
+          }
     }
 }

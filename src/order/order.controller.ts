@@ -6,6 +6,7 @@ import { CheckoutDto } from './dto/checkout.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { GetOngkirDto } from './dto/getOngkir.dto';
 
 @Controller('order')
 export class OrderController {
@@ -101,5 +102,10 @@ export class OrderController {
             destination,
             weight
             )
+    }
+
+    @Post("list/service/:id")
+    async listService(@Param('id') id: string, @Body() data: GetOngkirDto) {
+        return await this.order.listService(id, data);
     }
 }
