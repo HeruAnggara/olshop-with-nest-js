@@ -88,7 +88,7 @@ export class OrderController {
         fileName = file.filename;
     }
 
-    return await this.order.konfirmasi(id, checkoutId, fileName);
+    return await this.order.transaksi(id, checkoutId, fileName);
     }
 
     @Get("cek/ongkir/:origin/:destination/:weight")
