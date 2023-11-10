@@ -86,6 +86,8 @@ model checkout {
   barang_id   String
   total       Float     @db.Float    
   ongkir      Float     @db.Float    
+  servis      String    @default("REG")   
+  kurir       String    @default("jne")    
   status      Int       @default(0) 
   users       users     @relation(fields:[users_id], references: [id])
   barang      barang    @relation(fields:[barang_id], references: [id])
