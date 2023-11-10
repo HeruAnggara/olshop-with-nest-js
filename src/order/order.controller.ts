@@ -92,15 +92,19 @@ export class OrderController {
     return await this.order.transaksi(id, checkoutId, fileName);
     }
 
-    @Get("cek/ongkir/:origin/:destination/:weight")
+    @Get("cek/ongkir/:origin/:destination/:weight/:courier/:servis")
     async cekOngkir(
         @Param('origin') origin: string,
         @Param('destination') destination: string,
-        @Param('weight', ParseIntPipe) weight: number
+        @Param('weight', ParseIntPipe) weight: number,
+        @Param('courier') courier: string,
+        @Param('servis') servis: string
     ) {
         return await this.order.cekOngkir(origin,
             destination,
-            weight
+            weight,
+            courier,
+            servis
             )
     }
 
